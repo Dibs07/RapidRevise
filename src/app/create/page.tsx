@@ -19,11 +19,15 @@ export default function CreatePlan() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     subject: "",
-    topics: "",
-    availableHours: 5,
-    difficulty: "medium",
-    resourcePreference: "balanced",
+    board: "",
+    class_level: "",
+    department: "",
+    // topics: "",
+    // availableHours: 5,
+    // difficulty: "medium",
+    // resourcePreference: "balanced",
   })
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
   const [simplePrompt, setSimplePrompt] = useState("")
 
   const handleChange = (field: string, value: string | number) => {
@@ -32,16 +36,34 @@ export default function CreatePlan() {
 
   const handleSimpleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const studyPlan = generateSimpleStudyPlan(simplePrompt)
-    localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
+    
+    //localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
     router.push("/dashboard")
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const studyPlan = generateStudyPlan(formData)
-    localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
-    router.push("/dashboard")
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault()
+      const response = await fetch(`${baseUrl}/examprep/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      })
+      const data = await response.json()
+      console.log(data)
+      localStorage.setItem("studyPlan", JSON.stringify(data.topics_with_videos))
+      //router.push("/dashboard")
+      console.log(data)
+    } catch (error) {
+      console.error(error)
+    }
+    //e.preventDefault()
+   //const studyPlan = generateStudyPlan(formData)
+    //localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
+   // router.push("/dashboard")
   }
 
   return (
@@ -55,13 +77,13 @@ export default function CreatePlan() {
         <h1 className="text-2xl sm:text-3xl font-bold">Create Study Plan</h1>
       </div>
 
-      <Tabs defaultValue="simple" className="w-full">
+      <Tabs defaultValue="manual" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 gap-4 mb-6">
-          <TabsTrigger value="simple">Simple Prompt</TabsTrigger>
+          {/* <TabsTrigger value="simple">Simple Prompt</TabsTrigger> */}
           <TabsTrigger value="manual">Manual Entry</TabsTrigger>
         </TabsList>
         {/* simple */}  
-        <TabsContent value="simple">
+        {/* <TabsContent value="simple">
           <Card className="sm:max-w-xl max-w-lg mx-auto">
             <form onSubmit={handleSimpleSubmit}>
               <CardHeader>
@@ -94,7 +116,7 @@ export default function CreatePlan() {
               </CardFooter>
             </form>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
         {/* //manual */}
         <TabsContent value="manual">
           <Card className="sm:max-w-xl max-w-lg mx-auto">
@@ -107,6 +129,36 @@ export default function CreatePlan() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
+                  <Label htmlFor="board" className="text-base">Board</Label>
+                  <Input
+                    id="board"
+                    placeholder="e.g., CBSE, ICSE, IB"
+                    value={formData.board}
+                    onChange={(e) => handleChange("board", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="class_level" className="text-base">Class Level</Label>
+                  <Input
+                    id="class_level"
+                    placeholder="e.g., 10th, 11th, 12th"
+                    value={formData.class_level}
+                    onChange={(e) => handleChange("class_level", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="department" className="text-base">Department</Label>
+                  <Input
+                    id="department"
+                    placeholder="e.g., Science, Commerce, Arts"
+                    value={formData.department}
+                    onChange={(e) => handleChange("department", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="subject" className="text-base">Subject</Label>
                   <Input
                     id="subject"
@@ -117,7 +169,7 @@ export default function CreatePlan() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="topics" className="text-base">Topics to Cover</Label>
                   <Textarea
                     id="topics"
@@ -174,7 +226,7 @@ export default function CreatePlan() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
+                </div> */}
               </CardContent>
               <CardFooter className="grid sm:grid-cols-2 grid-cols-1 gap-4 mt-4 ">
               <Button type="submit">
@@ -191,106 +243,4 @@ export default function CreatePlan() {
       </Tabs>
     </div>
   )
-}
-
-function generateSimpleStudyPlan(prompt: string) {
-  // This is a basic implementation - you would want to enhance this
-  // to actually process the prompt and generate a meaningful plan
-  return {
-    id: Date.now().toString(),
-    subject: "Custom Study Plan",
-    totalTime: 120, // 2 hours default
-    difficulty: "medium",
-    createdAt: new Date().toISOString(),
-    studySessions: [
-      {
-        id: "topic-1",
-        topic: "Main Topic",
-        timeAllocated: 120,
-        resources: {
-          videos: [
-            {
-              id: "v-1-1",
-              title: "Introduction Video",
-              duration: "15 min",
-              url: "#",
-              completed: false,
-            }
-          ],
-          articles: [
-            {
-              id: "a-1-1",
-              title: "Study Guide",
-              readTime: "10 min",
-              url: "#",
-              completed: false,
-            }
-          ]
-        },
-        completed: false,
-      }
-    ],
-    progress: 0,
-  }
-}
-
-function generateStudyPlan(formData: any) {
-  const { subject, topics, availableHours, difficulty, resourcePreference } = formData
-  const topicsList = topics.split(",").map((topic: string) => topic.trim())
-  const hoursPerTopic = availableHours / topicsList.length
-  const studySessions = topicsList.map((topic: string, index: number) => {
-    let videoCount = 1
-    let articleCount = 1
-
-    if (resourcePreference === "videos") {
-      videoCount = 2
-      articleCount = 1
-    } else if (resourcePreference === "articles") {
-      videoCount = 1
-      articleCount = 2
-    } else {
-      // balanced
-      videoCount = 1
-      articleCount = 1
-    }
-
-    const resources = {
-      videos: Array(videoCount)
-        .fill(0)
-        .map((_, i) => ({
-          id: `v-${index}-${i}`,
-          title: `${topic} - Video Lecture ${i + 1}`,
-          duration: "15 min",
-          url: "#",
-          completed: false,
-        })),
-      articles: Array(articleCount)
-        .fill(0)
-        .map((_, i) => ({
-          id: `a-${index}-${i}`,
-          title: `${topic} - Study Article ${i + 1}`,
-          readTime: "10 min",
-          url: "#",
-          completed: false,
-        })),
-    }
-
-    return {
-      id: `topic-${index}`,
-      topic,
-      timeAllocated: Math.round(hoursPerTopic * 60),
-      resources,
-      completed: false,
-    }
-  })
-
-  return {
-    id: Date.now().toString(),
-    subject,
-    totalTime: availableHours * 60,
-    difficulty,
-    createdAt: new Date().toISOString(),
-    studySessions,
-    progress: 0,
-  }
 }
