@@ -1,12 +1,15 @@
 "use client"
+import { useRouter } from 'next/navigation';
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
 
 interface User {
   id: string;
-  username: string;
+  name: string;
   email: string;
-  profilePic: string;
+  profile_picture: string;
+  interests: string[];
+  preferences: string[];
 }
 
 
@@ -31,30 +34,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
-  
+  const router = useRouter();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('authToken');
-        
-        if (token) {
-          const response = await fetch(`${baseUrl}/api/auth/validate`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData.user);
-          } else {
-            localStorage.removeItem('authToken');
-          }
-        }
+        getUser();
       } catch (err) {
         console.error('Authentication error:', err);
         setError('Failed to authenticate user');
@@ -97,24 +84,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const getUser = async () => {
+    const response = await fetch(`${baseUrl}/user/me`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    const data = await response.json();
+    setIsAuthenticated(true);
+    setUser(data);
+  }
   // Logout function
   const logout = async () => {
     try {
       setLoading(true);
       
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        await fetch(`${baseUrl}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-      }
-      
-      localStorage.removeItem('authToken');
-      
+      await fetch(`${baseUrl}/auth/logout`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      setIsAuthenticated(false);
       setUser(null);
+      router.push('/');
     } catch (err) {
       console.error('Logout error:', err);
     } finally {

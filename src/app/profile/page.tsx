@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -5,44 +6,43 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { useAuth } from '@/context/context';
 
 function page() {
+  const { user,loading } = useAuth();
+  if(loading) return <div>Loading...</div>
   return (
     <div className="container mx-auto p-6 max-w-6xl min-h-screen">
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
             <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-              <AvatarImage src="/placeholder-avatar.jpg" alt="User profile" />
-              <AvatarFallback>AJ</AvatarFallback>
+              <AvatarImage src={user?.profile_picture} alt="User profile" />
+              <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
             </Avatar>
             
             <div className="space-y-4 flex-1">
               <div>
-                <h1 className="text-2xl font-bold">Alex Johnson</h1>
-                <p className="text-gray-500">Software Developer</p>
-                <p className="text-gray-600 text-sm">alex.johnson@example.com</p>
+                  <h1 className="text-2xl font-bold">{user?.name}</h1>
+                <p className="text-gray-600 text-sm">{user?.email}</p>
               </div>
               
               <div className="space-y-3">
                 <div>
                   <h3 className="text-sm font-medium text-gray-600 mb-2">Interests</h3>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">Web Development</Badge>
-                    <Badge variant="secondary">Data Science</Badge>
-                    <Badge variant="secondary">Machine Learning</Badge>
-                    <Badge variant="secondary">UX/UI Design</Badge>
-                    <Badge variant="secondary">Cloud Computing</Badge>
+                    {user?.interests && user?.interests.length > 0 ? user?.interests.map((interest: string) => (
+                      <Badge variant="outline" key={interest}>{interest}</Badge>
+                    )) : <Badge variant="outline">No interests</Badge>}
                   </div>
                 </div>
                 
                 <div>
                   <h3 className="text-sm font-medium text-gray-600 mb-2">Preferences</h3>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">Dark Mode</Badge>
-                    <Badge variant="outline">Video Tutorials</Badge>
-                    <Badge variant="outline">Weekly Digest</Badge>
-                    <Badge variant="outline">Technical Documentation</Badge>
+                    {user?.preferences && user?.preferences.length > 0 ? user?.preferences.map((preference: string) => (
+                      <Badge variant="outline" key={preference}>{preference}</Badge>
+                    )) : <Badge variant="outline">No preferences</Badge>}
                   </div>
                 </div>
               </div>
