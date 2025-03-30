@@ -10,6 +10,7 @@ interface User {
   profile_picture: string;
   interests: string[];
   preferences: string[];
+  role : string;
 }
 
 
