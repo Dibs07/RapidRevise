@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
+import MarkdownPreview from '@uiw/react-markdown-preview';
 
 interface VideoItem {
   channel: string;
@@ -78,18 +79,18 @@ const generateId = (): string => {
 // Helper function to convert duration string to minutes
 const parseDuration = (duration: string) => {
   if (!duration) return 0;
-  
+
   const match = duration.match(/PT(\d+)M(\d+)S/);
   if (match) {
     return parseInt(match[1]) + Math.round(parseInt(match[2]) / 60);
   }
-  
+
   // Try to parse from format like "10 minutes"
   const minutesMatch = duration.match(/(\d+)\s*minutes?/);
   if (minutesMatch) {
     return parseInt(minutesMatch[1]);
   }
-  
+
   return 0;
 };
 
@@ -121,17 +122,17 @@ const page = () => {
     setTimeout(() => {
       try {
         const storedData = localStorage.getItem("Data");
-        
+
         if (storedData) {
           try {
             // Attempt to parse the stored data
             const parsedData = JSON.parse(storedData);
-            
+
             // Check if we have the study_plan data structure from document 1
             if (parsedData && parsedData.study_plan) {
               const studyPlanData = parsedData.study_plan;
               const topics = parsedData.topics_with_videos || [];
-              
+
               // Process topics to ensure they have IDs
               const processedTopics = topics.map((topic: any) => ({
                 ...topic,
@@ -147,7 +148,7 @@ const page = () => {
               };
 
               // Calculate total study time from prep_time_minutes
-              const totalTime = processedTopics.reduce((total: number, topic: TopicItem) => 
+              const totalTime = processedTopics.reduce((total: number, topic: TopicItem) =>
                 total + (topic.prep_time_minutes || 0), 0);
 
               // Create study plan structure
@@ -223,7 +224,7 @@ const page = () => {
   useEffect(() => {
     if (studyPlan) {
       localStorage.setItem("studyPlan", JSON.stringify(studyPlan));
-      
+
       // Calculate progress by counting completed items across all tabs
       const allTopics = [...studyPlan.tabs.videos];
       const allItems = [
@@ -231,13 +232,13 @@ const page = () => {
         ...studyPlan.tabs.articles,
         ...studyPlan.tabs.questions
       ];
-      
+
       const totalItems = allItems.length;
       const completedItems = allItems.filter(item => item.completed).length;
       const newProgress = totalItems > 0
         ? Math.round((completedItems / totalItems) * 100)
         : 0;
-        
+
       if (newProgress !== studyPlan.progress) {
         setStudyPlan(prev => prev ? {
           ...prev,
@@ -254,7 +255,7 @@ const page = () => {
       [name]: value
     }));
   };
-  
+
   const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -289,7 +290,7 @@ const page = () => {
 
   const openEditDialog = (item: TopicItem | StudyItem) => {
     setCurrentItem(item);
-    
+
     if ('topic_name' in item) {
       // It's a topic item
       setFormData({
@@ -323,15 +324,15 @@ const page = () => {
         prep_time_minutes: 30
       });
     }
-    
+
     setIsEditDialogOpen(true);
   };
 
   const handleAddItem = () => {
     if (!studyPlan) return;
-    
+
     const newId = generateId();
-    
+
     if (formData.type === "videos") {
       // Add a new topic
       const newTopic: TopicItem = {
@@ -350,7 +351,7 @@ const page = () => {
           views: "0"
         }]
       };
-      
+
       setStudyPlan(prev => {
         if (!prev) return prev;
         return {
@@ -372,7 +373,7 @@ const page = () => {
         content: formData.content,
         readTime: `${Math.ceil(formData.content.length / 1000)} minutes`
       };
-      
+
       setStudyPlan(prev => {
         if (!prev) return prev;
         return {
@@ -393,7 +394,7 @@ const page = () => {
         question: formData.question,
         answer: formData.answer
       };
-      
+
       setStudyPlan(prev => {
         if (!prev) return prev;
         return {
@@ -405,7 +406,7 @@ const page = () => {
         };
       });
     }
-    
+
     resetForm();
     setIsAddDialogOpen(false);
     toast.success("Item added successfully");
@@ -413,7 +414,7 @@ const page = () => {
 
   const handleEditItem = () => {
     if (!studyPlan || !currentItem) return;
-    
+
     if ('topic_name' in currentItem) {
       // Update a topic
       const updatedTopic: TopicItem = {
@@ -421,7 +422,7 @@ const page = () => {
         topic_name: formData.topic_name || formData.title,
         importance: formData.importance,
         prep_time_minutes: formData.prep_time_minutes,
-        videos: currentItem.videos.map((video, idx) => 
+        videos: currentItem.videos.map((video, idx) =>
           idx === 0 ? {
             ...video,
             title: formData.title,
@@ -431,18 +432,18 @@ const page = () => {
           } : video
         )
       };
-      
+
       setStudyPlan(prev => {
         if (!prev) return prev;
-        const updatedVideos = prev.tabs.videos.map(topic => 
+        const updatedVideos = prev.tabs.videos.map(topic =>
           topic.id === currentItem.id ? updatedTopic : topic
         );
-        
+
         // Also update in completed tab if present
-        const updatedCompleted = prev.tabs.completed.map(item => 
+        const updatedCompleted = prev.tabs.completed.map(item =>
           item.id === currentItem.id ? updatedTopic : item
         );
-        
+
         return {
           ...prev,
           tabs: {
@@ -463,32 +464,32 @@ const page = () => {
         url: formData.url,
         channel: formData.channel,
         duration: formData.duration,
-        readTime: formData.type === 'articles' ? 
-          `${Math.ceil(formData.content.length / 1000)} minutes` : 
+        readTime: formData.type === 'articles' ?
+          `${Math.ceil(formData.content.length / 1000)} minutes` :
           currentItem.readTime
       };
-      
+
       setStudyPlan(prev => {
         if (!prev) return prev;
-        
+
         let updatedArticles = [...prev.tabs.articles];
         let updatedQuestions = [...prev.tabs.questions];
-        
+
         if (currentItem.type === 'articles') {
-          updatedArticles = prev.tabs.articles.map(item => 
+          updatedArticles = prev.tabs.articles.map(item =>
             item.id === currentItem.id ? updatedItem : item
           );
         } else if (currentItem.type === 'questions') {
-          updatedQuestions = prev.tabs.questions.map(item => 
+          updatedQuestions = prev.tabs.questions.map(item =>
             item.id === currentItem.id ? updatedItem : item
           );
         }
-        
+
         // Also update in completed tab if present
-        const updatedCompleted = prev.tabs.completed.map(item => 
+        const updatedCompleted = prev.tabs.completed.map(item =>
           item.id === currentItem.id ? updatedItem : item
         );
-        
+
         return {
           ...prev,
           tabs: {
@@ -500,7 +501,7 @@ const page = () => {
         };
       });
     }
-    
+
     resetForm();
     setIsEditDialogOpen(false);
     setCurrentItem(null);
@@ -509,15 +510,15 @@ const page = () => {
 
   const handleDeleteItem = () => {
     if (!studyPlan || !currentItem) return;
-    
+
     setStudyPlan(prev => {
       if (!prev) return prev;
-      
+
       let updatedVideos = [...prev.tabs.videos];
       let updatedArticles = [...prev.tabs.articles];
       let updatedQuestions = [...prev.tabs.questions];
       let updatedCompleted = [...prev.tabs.completed];
-      
+
       if ('topic_name' in currentItem) {
         updatedVideos = prev.tabs.videos.filter(topic => topic.id !== currentItem.id);
       } else if (currentItem.type === 'articles') {
@@ -525,10 +526,10 @@ const page = () => {
       } else if (currentItem.type === 'questions') {
         updatedQuestions = prev.tabs.questions.filter(item => item.id !== currentItem.id);
       }
-      
+
       // Also remove from completed tab
       updatedCompleted = prev.tabs.completed.filter(item => item.id !== currentItem.id);
-      
+
       return {
         ...prev,
         tabs: {
@@ -539,7 +540,7 @@ const page = () => {
         }
       };
     });
-    
+
     setIsConfirmDeleteOpen(false);
     setCurrentItem(null);
     toast.success("Item deleted successfully");
@@ -547,22 +548,22 @@ const page = () => {
 
   const handleToggleComplete = (item: TopicItem | StudyItem) => {
     if (!studyPlan) return;
-    
+
     const newCompletedState = !item.completed;
-    
+
     // Handle topic items
     if ('topic_name' in item) {
       setStudyPlan(prev => {
         if (!prev) return prev;
-        
+
         // Update in videos tab
-        const updatedVideos = prev.tabs.videos.map(topic => 
+        const updatedVideos = prev.tabs.videos.map(topic =>
           topic.id === item.id ? { ...topic, completed: newCompletedState } : topic
         );
-        
+
         // Update completed tab
         let updatedCompleted = [...prev.tabs.completed];
-        
+
         if (newCompletedState) {
           // Add to completed if not already there
           if (!updatedCompleted.some(i => i.id === item.id)) {
@@ -572,7 +573,7 @@ const page = () => {
           // Remove from completed
           updatedCompleted = updatedCompleted.filter(i => i.id !== item.id);
         }
-        
+
         return {
           ...prev,
           tabs: {
@@ -586,23 +587,23 @@ const page = () => {
       // Handle study items
       setStudyPlan(prev => {
         if (!prev) return prev;
-        
+
         let updatedArticles = [...prev.tabs.articles];
         let updatedQuestions = [...prev.tabs.questions];
-        
+
         if (item.type === 'articles') {
-          updatedArticles = prev.tabs.articles.map(i => 
+          updatedArticles = prev.tabs.articles.map(i =>
             i.id === item.id ? { ...i, completed: newCompletedState } : i
           );
         } else if (item.type === 'questions') {
-          updatedQuestions = prev.tabs.questions.map(i => 
+          updatedQuestions = prev.tabs.questions.map(i =>
             i.id === item.id ? { ...i, completed: newCompletedState } : i
           );
         }
-        
+
         // Update completed tab
         let updatedCompleted = [...prev.tabs.completed];
-        
+
         if (newCompletedState) {
           // Add to completed if not already there
           if (!updatedCompleted.some(i => i.id === item.id)) {
@@ -612,7 +613,7 @@ const page = () => {
           // Remove from completed
           updatedCompleted = updatedCompleted.filter(i => i.id !== item.id);
         }
-        
+
         return {
           ...prev,
           tabs: {
@@ -624,7 +625,7 @@ const page = () => {
         };
       });
     }
-    
+
     toast.success(`Item marked as ${newCompletedState ? 'completed' : 'incomplete'}`);
   };
 
@@ -639,7 +640,7 @@ const page = () => {
     // if (ptMatch) {
     //   return `${ptMatch[1]}:${ptMatch[2].padStart(2, '0')}`;
     // }
-    
+
     return duration;
   };
 
@@ -664,9 +665,9 @@ const page = () => {
             {item.videos && item.videos.map((video, index) => (
               <div key={`${video.video_id || index}`} className="flex items-start space-x-3 border-t pt-3">
                 <div className="flex-shrink-0">
-                  <img src={video.thumbnail || "https://i.ytimg.com/vi/placeholder/hqdefault.jpg"} 
-                       alt={video.title} 
-                       className="w-24 h-16 rounded object-cover" />
+                  <img src={video.thumbnail || "https://i.ytimg.com/vi/placeholder/hqdefault.jpg"}
+                    alt={video.title}
+                    className="w-24 h-16 rounded object-cover" />
                 </div>
                 <div className="flex-grow">
                   <div className="flex items-start justify-between">
@@ -746,7 +747,7 @@ const page = () => {
               </div>
             )}
           </div>
-          
+
           <div className="text-sm border-t pt-2">
             {item.content && (
               <div className="max-h-24 overflow-hidden relative">
@@ -758,7 +759,7 @@ const page = () => {
               Read Full Article
             </Button>
           </div>
-          
+
           <div className="flex justify-end space-x-1 pt-2 border-t">
             <Button
               variant="ghost"
@@ -802,10 +803,14 @@ const page = () => {
           <div className="flex-grow">
             <div className="flex items-start justify-between">
               <div className="w-full">
-                <h4 className="font-medium text-sm">Q: {item.question}</h4>
+                <MarkdownPreview
+                  source={item.question}
+                />
                 {showAnswer && (
                   <div className="mt-2 p-2 bg-gray-50 rounded">
-                    <p className="text-sm">A: {item.answer}</p>
+                    <MarkdownPreview
+                      source={item.answer}
+                    />
                   </div>
                 )}
                 <Button
@@ -899,7 +904,7 @@ const page = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <div>
                 <h3 className="text-lg font-medium">Your Progress</h3>
                 <p className="text-muted-foreground text-sm">
@@ -917,7 +922,7 @@ const page = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <Tabs defaultValue="videos" className="space-y-4" onValueChange={setActiveTab}>
         <div className="flex justify-between items-center">
           <TabsList>
@@ -970,7 +975,7 @@ const page = () => {
                     <Label htmlFor="questions">Question</Label>
                   </div>
                 </RadioGroup>
-                
+
                 {formData.type === "videos" && (
                   <>
                     <div className="space-y-2">
@@ -1045,7 +1050,7 @@ const page = () => {
                     </div>
                   </>
                 )}
-                
+
                 {formData.type === "articles" && (
                   <>
                     <div className="space-y-2">
@@ -1069,7 +1074,7 @@ const page = () => {
                     </div>
                   </>
                 )}
-                
+
                 {formData.type === "questions" && (
                   <>
                     <div className="space-y-2">
@@ -1111,7 +1116,7 @@ const page = () => {
             </DialogContent>
           </Dialog>
         </div>
-        
+
         <TabsContent value="videos" className="space-y-4">
           {studyPlan.tabs.videos.length === 0 ? (
             <div className="text-center py-8">
@@ -1131,7 +1136,7 @@ const page = () => {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="articles" className="space-y-4">
           {studyPlan.tabs.articles.length === 0 ? (
             <div className="text-center py-8">
@@ -1151,7 +1156,7 @@ const page = () => {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="questions" className="space-y-4">
           {studyPlan.tabs.questions.length === 0 ? (
             <div className="text-center py-8">
@@ -1171,7 +1176,7 @@ const page = () => {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="completed" className="space-y-4">
           {studyPlan.tabs.completed.length === 0 ? (
             <div className="text-center py-8">
@@ -1195,7 +1200,7 @@ const page = () => {
           )}
         </TabsContent>
       </Tabs>
-      
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -1277,7 +1282,7 @@ const page = () => {
                 </div>
               </>
             )}
-            
+
             {formData.type === "articles" && (
               <>
                 <div className="space-y-2">
@@ -1301,7 +1306,7 @@ const page = () => {
                 </div>
               </>
             )}
-            
+
             {formData.type === "questions" && (
               <>
                 <div className="space-y-2">
@@ -1342,7 +1347,7 @@ const page = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}>
         <DialogContent className="sm:max-w-[425px]">
