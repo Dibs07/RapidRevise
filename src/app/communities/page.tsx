@@ -29,6 +29,7 @@ import { AuthProvider, useAuth } from "@/context/context";
 import { toast } from "sonner";
 
 function Page() {
+  const { isAuthenticated, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,6 @@ function Page() {
     error,
     fetchCommunities,
   } = useGetAllCommunity();
-  const { isAuthenticated, user } = useAuth();
 
   const getAvatarColor = (name: string) => {
     const colors = [
@@ -92,20 +92,6 @@ function Page() {
   const handleCreateCommunity = async () => {
     try {
       setIsLoading(true);
-      if (!isAuthenticated) {
-        toast.error("Please login to create a community.");
-        return;
-      }
-      if (user?.role !== "ADMIN") {
-        toast.error("Only admins can create communities.");
-        const wantToLogin = window.confirm("Do you want to login as Admin?");
-        if (wantToLogin) {
-          router.push("/community/google/login");
-          return;
-        }
-        setIsLoading(false);
-        return;
-      }
       const response = await fetch(`${baseUrl}/community/`, {
         method: "POST",
         body: JSON.stringify(newCommunity),
@@ -155,7 +141,25 @@ function Page() {
           <Button disabled>Loading...</Button>
         ) : (
           <Button
-            onClick={() => setIsOpen(true)}
+            onClick={() => {
+              if (!isAuthenticated) {
+                toast.error("Please login to create a community.");
+                return;
+              }
+              if (user?.role !== "ADMIN") {
+                toast.error("Only admins can create communities.");
+                const wantToLogin = window.confirm(
+                  "Do you want to login as Admin?"
+                );
+                if (wantToLogin) {
+                  window.location.href = "http://localhost:5000/community/google/login";
+                  return;
+                }
+                setIsLoading(false);
+                return;
+              }
+              setIsOpen(true);
+            }}
             className='flex items-center gap-2 sm:mt-0 mt-2'
           >
             <PlusCircle size={18} />
