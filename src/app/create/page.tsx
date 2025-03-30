@@ -12,11 +12,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Loader2, Save } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function CreatePlan() {
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     subject: "",
     board: "",
@@ -44,6 +45,7 @@ export default function CreatePlan() {
   const handleSubmit = async (e: React.FormEvent) => {
     try {
       e.preventDefault()
+      setLoading(true)
       const response = await fetch(`${baseUrl}/examprep/`, {
         method: "POST",
         headers: {
@@ -54,17 +56,21 @@ export default function CreatePlan() {
       })
       const data = await response.json()
       console.log(data)
+      localStorage.setItem("Data", JSON.stringify(data))
       localStorage.setItem("studyPlan", JSON.stringify(data.topics_with_videos))
-      //router.push("/dashboard")
+      router.push("/dashboard")
       console.log(data)
     } catch (error) {
       console.error(error)
+    } finally {
+      setLoading(false)
     }
     //e.preventDefault()
    //const studyPlan = generateStudyPlan(formData)
     //localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
    // router.push("/dashboard")
   }
+
 
   return (
     <div className="container mx-auto w-full py-4 px-4 sm:py-10 sm:px-24 min-h-screen">
@@ -79,11 +85,11 @@ export default function CreatePlan() {
 
       <Tabs defaultValue="manual" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 gap-4 mb-6">
-          {/* <TabsTrigger value="simple">Simple Prompt</TabsTrigger> */}
+          <TabsTrigger value="simple">Simple Prompt</TabsTrigger>
           <TabsTrigger value="manual">Manual Entry</TabsTrigger>
         </TabsList>
         {/* simple */}  
-        {/* <TabsContent value="simple">
+        <TabsContent value="simple">
           <Card className="sm:max-w-xl max-w-lg mx-auto">
             <form onSubmit={handleSimpleSubmit}>
               <CardHeader>
@@ -106,8 +112,14 @@ export default function CreatePlan() {
                 </div>
               </CardContent>
               <CardFooter className="grid sm:grid-cols-2 grid-cols-1 gap-4 mt-4 ">
-              <Button type="submit">
-                  <Save className="mr-2 h-4 w-4" />
+              <Button type="submit" disabled={loading}>
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </span>
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
                   Generate Study Plan
                 </Button>
                 <Button variant="outline" type="button" onClick={() => router.push("/")}>
@@ -116,7 +128,7 @@ export default function CreatePlan() {
               </CardFooter>
             </form>
           </Card>
-        </TabsContent> */}
+        </TabsContent>
         {/* //manual */}
         <TabsContent value="manual">
           <Card className="sm:max-w-xl max-w-lg mx-auto">
@@ -229,8 +241,14 @@ export default function CreatePlan() {
                 </div> */}
               </CardContent>
               <CardFooter className="grid sm:grid-cols-2 grid-cols-1 gap-4 mt-4 ">
-              <Button type="submit">
-                  <Save className="mr-2 h-4 w-4" />
+              <Button type="submit" disabled={loading}>
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </span>
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
                   Generate Study Plan
                 </Button>
                 <Button variant="outline" type="button" onClick={() => router.push("/")}>
