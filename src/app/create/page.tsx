@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { use, useState } from "react"
+import { use, useCallback, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import { ArrowLeft, Loader2, Save } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useDropzone } from 'react-dropzone';
 
 export default function CreatePlan() {
   const router = useRouter()
@@ -28,16 +29,58 @@ export default function CreatePlan() {
     // difficulty: "medium",
     // resourcePreference: "balanced",
   })
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL
   const [simplePrompt, setSimplePrompt] = useState("")
 
   const handleChange = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
+  const onDrop = useCallback((acceptedFiles: any) => {
+    // For simplicity, we take the first file if multiple are dropped
+    setUploadedFile(acceptedFiles[0]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
+  const handlePromptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("prompt", simplePrompt);
+
+      if (uploadedFile) {
+        if (uploadedFile.type !== "application/pdf") {
+          alert("Only PDF files are allowed.");
+          return;
+        }
+        formDataToSend.append("file", uploadedFile);
+      }
+
+      const response = await fetch(`${baseUrl}/study_plan/pdf`, {
+        method: "POST",
+        credentials: "include",
+        body: formDataToSend,
+      });
+
+      const data = await response.json();
+      console.log(data);
+      localStorage.setItem("Data", JSON.stringify(data));
+      localStorage.setItem("studyPlan", JSON.stringify(data.topics_with_videos));
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleSimpleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     //localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
     router.push("/dashboard")
   }
@@ -66,9 +109,9 @@ export default function CreatePlan() {
       setLoading(false)
     }
     //e.preventDefault()
-   //const studyPlan = generateStudyPlan(formData)
+    //const studyPlan = generateStudyPlan(formData)
     //localStorage.setItem("studyPlan", JSON.stringify(studyPlan))
-   // router.push("/dashboard")
+    // router.push("/dashboard")
   }
 
 
@@ -88,10 +131,10 @@ export default function CreatePlan() {
           <TabsTrigger value="simple">Simple Prompt</TabsTrigger>
           <TabsTrigger value="manual">Manual Entry</TabsTrigger>
         </TabsList>
-        {/* simple */}  
+        {/* simple */}
         <TabsContent value="simple">
           <Card className="sm:max-w-xl max-w-lg mx-auto">
-            <form onSubmit={handleSimpleSubmit}>
+            <form onSubmit={handlePromptSubmit}>
               <CardHeader>
                 <CardTitle className="text-2xl font-bold">Quick Study Plan</CardTitle>
                 <CardDescription className="text-sm py-1">
@@ -110,9 +153,28 @@ export default function CreatePlan() {
                     className="min-h-[100px]"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-xl">Upload File (optional)</Label>
+                  <div
+                    {...getRootProps()}
+                    className="border-2 border-dashed p-4 rounded-md text-center cursor-pointer"
+                  >
+                    <input {...getInputProps()} />
+                    {isDragActive ? (
+                      <p>Drop the file here...</p>
+                    ) : (
+                      <p>Drag and drop a file here, or click to select one</p>
+                    )}
+                  </div>
+                  {uploadedFile && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600">File selected: {uploadedFile?.name!}</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
-              <CardFooter className="grid sm:grid-cols-2 grid-cols-1 gap-4 mt-4 ">
-              <Button type="submit" disabled={loading}>
+              <CardFooter className="grid sm:grid-cols-2 grid-cols-1 gap-4 mt-4">
+                <Button type="submit" disabled={loading}>
                   {loading ? (
                     <span className="flex items-center justify-center">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -161,7 +223,7 @@ export default function CreatePlan() {
                   />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="department" className="text-base">Department</Label>
+                  <Label htmlFor="department" className="text-base">Department</Label>
                   <Input
                     id="department"
                     placeholder="e.g., Science, Commerce, Arts"
@@ -241,7 +303,7 @@ export default function CreatePlan() {
                 </div> */}
               </CardContent>
               <CardFooter className="grid sm:grid-cols-2 grid-cols-1 gap-4 mt-4 ">
-              <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading}>
                   {loading ? (
                     <span className="flex items-center justify-center">
                       <Loader2 className="h-4 w-4 animate-spin" />
